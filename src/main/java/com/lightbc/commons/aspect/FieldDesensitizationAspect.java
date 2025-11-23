@@ -47,6 +47,8 @@ public class FieldDesensitizationAspect {
                         int start = fd.start();
                         // 脱敏结束位置下标
                         int end = fd.end();
+                        // 开始位置计算加密长度
+                        int len = fd.len();
                         // 设置私有属性可访问
                         field.setAccessible(true);
                         // 获取脱敏注解注解的字段值
@@ -55,6 +57,12 @@ public class FieldDesensitizationAspect {
                         if (fv instanceof String) {
                             String sfv = String.valueOf(fv);
                             String nsf = sfv;
+                            if (start < 0 || start > sfv.length()) {
+                                return;
+                            }
+                            if (start > end && end > 0) {
+                                return;
+                            }
                             // 结束位置下标需要大于开始位置下标
                             if (end > start) {
                                 // 当结束位置下标大于字符串的长度时，脱敏开始位置到字符串结尾位置
@@ -65,9 +73,17 @@ public class FieldDesensitizationAspect {
                                 nsf = sfv.substring(0, start) + sfv.substring(start, end).replaceAll(".", rc) + sfv.substring(end);
                             }
                             // 当开始位置下标大于0，结束位置下标为-1时，表明从开始位置下标到字符串结尾都脱敏处理
-                            if (start > 0 && end == -1) {
+                            if (end < 0) {
                                 // 将脱敏位置使用替换字符替换掉
                                 nsf = sfv.substring(0, start) + sfv.substring(start).replaceAll(".", rc);
+                            }
+                            // 加密指定长度
+                            if (len > 0) {
+                                int endIndex = start + len;
+                                if (endIndex > sfv.length()) {
+                                    endIndex = sfv.length();
+                                }
+                                nsf = sfv.substring(0, start) + sfv.substring(start, endIndex).replaceAll(".", rc) + sfv.substring(endIndex);
                             }
                             // 将脱敏后的内容再赋值给原字段
                             field.set(response, nsf);

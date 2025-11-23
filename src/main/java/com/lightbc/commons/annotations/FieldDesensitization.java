@@ -18,4 +18,7 @@ public @interface FieldDesensitization {
     // 结束下标，默认到字符串结尾
     int end() default -1;
 
+    // 从开始位置计算，加密字符长度，默认开始位置到字符串结尾
+    int len() default -1;
+
 }
